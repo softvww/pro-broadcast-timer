@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BROADCAST VIEW | Videowaves Timer</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            cursor: none !important;
+            background: #000;
+        }
+        .control-bar { display: none !important; }
+    </style>
+</head>
+<body class="broadcast-mode">
+    <div class="viewport-wrapper">
+        <div class="aspect-ratio-container">
+            <div class="bg-gradient"></div>
+
+            <!-- Time Up Overlay -->
+            <div class="overlay time-up-overlay hidden" id="time-up-overlay">
+                <h1>TIME UP</h1>
+            </div>
+
+            <!-- Holding Mode Overlay -->
+            <div class="overlay holding-overlay hidden" id="holding-overlay">
+                <img id="holding-image" src="" alt="" class="holding-image hidden">
+                <div class="holding-text-block hidden" id="holding-text-block">
+                    <h1 id="holding-text"></h1>
+                    <div class="holding-subtext" id="holding-subtext"></div>
+                </div>
+                <!-- Push Message Ticker -->
+                <div class="push-ticker hidden" id="push-ticker">
+                    <span class="push-ticker-label">● LIVE MESSAGE</span>
+                    <span id="push-ticker-text"></span>
+                </div>
+            </div>
+
+            <!-- Timer Content -->
+            <div class="content-layer" id="timer-content">
+                <div class="timer-display" id="timer-display">00:00:00</div>
+                <div class="timer-label" id="timer-label">COUNTDOWN</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const bc = new BroadcastChannel('timer_sync');
+        const timerDisplay = document.getElementById('timer-display');
+        const holdingOverlay = document.getElementById('holding-overlay');
+        const timerContent = document.getElementById('timer-content');
+        const holdingText = document.getElementById('holding-text');
+        const holdingSubtext = document.getElementById('holding-subtext');
+        const holdingTextBlock = document.getElementById('holding-text-block');
+        const timeUpOverlay = document.getElementById('time-up-overlay');
+        const holdingImage = document.getElementById('holding-image');
+        const pushTicker = document.getElementById('push-ticker');
+        const pushTickerText = document.getElementById('push-ticker-text');
+
+        bc.onmessage = (event) => {
+            const { type, data } = event.data;
+            
+            if (type === 'TICK') {
+                timerDisplay.textContent = data.display;
+                if (data.isTimeUp) {
+                    timeUpOverlay.classList.remove('hidden');
+                } else {
+                    timeUpOverlay.classList.add('hidden');
+                }
+            }
+            
+            if (type === 'HOLDING') {
+                if (data.active) {
+                    holdingOverlay.classList.remove('hidden');
+                    timerContent.classList.add('hidden');
+
+                    const mainText = data.text || '';
+                    const subText = data.subtext || '';
+
+                    holdingText.textContent = mainText;
+                    holdingSubtext.textContent = subText;
+
+                    if (mainText.trim() !== '' || subText.trim() !== '') {
+                        holdingTextBlock.classList.remove('hidden');
+                    } else {
+                        holdingTextBlock.classList.add('hidden');
+                    }
+                } else {
+                    holdingOverlay.classList.add('hidden');
+                    timerContent.classList.remove('hidden');
+                }
+            }
+
+            if (type === 'IMAGE') {
+                if (data.src) {
+                    holdingImage.src = data.src;
+                    holdingImage.classList.remove('hidden');
+                } else {
+                    holdingImage.src = '';
+                    holdingImage.classList.add('hidden');
+                }
+                if (data.color) {
+                    holdingText.style.color = data.color;
+                    holdingSubtext.style.color = data.color;
+                }
+            }
+
+            if (type === 'PUSH_MSG') {
+                if (data.text && data.text.trim() !== '') {
+                    pushTickerText.textContent = data.text;
+                    pushTicker.classList.remove('hidden');
+                } else {
+                    pushTicker.classList.add('hidden');
+                    pushTickerText.textContent = '';
+                }
+            }
+
+            if (type === 'RESET') {
+                timeUpOverlay.classList.add('hidden');
+                holdingOverlay.classList.add('hidden');
+                timerContent.classList.remove('hidden');
+                timerDisplay.textContent = data.display;
+                pushTicker.classList.add('hidden');
+            }
+        };
+
+        // On load, request sync from control window
+        bc.postMessage({ type: 'SYNC_REQUEST' });
+    </script>
+</body>
+</html>

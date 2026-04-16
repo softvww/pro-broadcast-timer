@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videowaves Timer | Professional Broadcast Timer</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="viewport-wrapper">
+        <div class="aspect-ratio-container" id="main-container">
+            <!-- Background Layer -->
+            <div class="bg-gradient"></div>
+
+            <!-- Time Up Overlay (Blinking Red) -->
+            <div class="overlay time-up-overlay hidden" id="time-up-overlay">
+                <h1>TIME UP</h1>
+            </div>
+
+            <!-- Holding Mode Overlay -->
+            <div class="overlay holding-overlay hidden" id="holding-overlay">
+                <!-- Event Image (if uploaded) -->
+                <img id="holding-image" src="" alt="" class="holding-image hidden">
+                <!-- Text overlay (shown / hidden by user) -->
+                <div class="holding-text-block hidden" id="holding-text-block">
+                    <h1 id="holding-text"></h1>
+                    <div class="holding-subtext" id="holding-subtext"></div>
+                </div>
+                <!-- Push Message Ticker (bottom bar) -->
+                <div class="push-ticker hidden" id="push-ticker">
+                    <span class="push-ticker-label">● LIVE MESSAGE</span>
+                    <span id="push-ticker-text"></span>
+                </div>
+            </div>
+
+            <!-- Timer Content -->
+            <div class="content-layer" id="timer-content">
+                <div class="status-badge" id="status-badge">STANDBY</div>
+                <div class="timer-display" id="timer-display">05:00</div>
+                <div class="timer-label" id="timer-label">COUNTDOWN</div>
+            </div>
+
+            <!-- Floating Control Bar (Visible on Hover) -->
+            <div class="control-bar" id="control-bar">
+                <!-- Row 0: Branding -->
+                <div class="control-brand-row">
+                    <span class="brand-logo-text">VIDEOWAVES <span class="brand-accent">TIMER</span></span>
+                    <span class="brand-tagline">Professional Broadcast Control</span>
+                </div>
+                <!-- Row 1: Timer controls -->
+                <div class="control-group">
+                    <input type="number" id="input-hours" placeholder="Hrs" min="0" max="23" value="0">
+                    <input type="number" id="input-minutes" placeholder="Min" min="0" max="59" value="5">
+                    <input type="number" id="input-seconds" placeholder="Sec" min="0" max="59" value="0">
+                    <button class="btn btn-primary" id="start-btn">▶ START</button>
+                    <button class="btn btn-secondary" id="stop-btn">⏸ STOP</button>
+                    <button class="btn btn-danger" id="reset-btn">↺ RESET</button>
+                    <div class="control-divider"></div>
+                    <button class="btn btn-toggle" id="holding-toggle" style="background: #5856d6;">HOLDING MODE</button>
+                    <button class="btn btn-toggle" id="broadcast-btn" style="background: #34c759;">📺 OPEN BROADCAST</button>
+                </div>
+                <!-- Row 2: Quick Presets + Audio -->
+                <div class="control-group">
+                    <label class="file-label">
+                        <span>Upload Alarm Audio</span>
+                        <input type="file" id="audio-upload" accept="audio/*">
+                    </label>
+                    <div class="control-divider"></div>
+                    <span class="label-text">QUICK:</span>
+                    <div class="preset-buttons" id="preset-buttons">
+                        <button class="btn btn-small preset-btn" data-min="5">5m</button>
+                        <button class="btn btn-small preset-btn" data-min="10">10m</button>
+                        <button class="btn btn-small preset-btn" data-min="15">15m</button>
+                        <button class="btn btn-small preset-btn" data-min="20">20m</button>
+                        <button class="btn btn-small preset-btn" data-min="30">30m</button>
+                        <button class="btn btn-small preset-btn" data-min="45">45m</button>
+                        <button class="btn btn-small preset-btn" data-min="60">60m</button>
+                    </div>
+                </div>
+                <!-- Row 3: Holding Controls -->
+                <div class="control-group holding-controls-row">
+                    <span class="label-text">HOLDING:</span>
+                    <label class="file-label">
+                        <span>Event Image</span>
+                        <input type="file" id="image-upload" accept="image/*">
+                    </label>
+                    <button class="btn btn-secondary" id="clear-image-btn" style="font-size:0.78rem;">CLEAR IMG</button>
+                    <div class="control-divider"></div>
+                    <input type="text" id="holding-input" placeholder="Holding text (optional)..." value="" style="width:200px;">
+                    <button class="btn btn-secondary" id="holding-clear-text-btn" style="font-size:0.78rem;">CLEAR TEXT</button>
+                    <div class="control-divider"></div>
+                    <input type="text" id="push-msg-input" placeholder="Push message to screen..." style="width:220px;">
+                    <button class="btn btn-push" id="push-msg-btn">📣 PUSH MSG</button>
+                    <button class="btn btn-secondary" id="clear-push-btn" style="font-size:0.78rem;">CLEAR MSG</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Audio Element -->
+    <audio id="alarm-audio"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>

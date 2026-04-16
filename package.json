@@ -1,0 +1,41 @@
+{
+  "name": "videowaves-pro-timer",
+  "version": "1.0.2",
+  "description": "Professional 16:9 Broadcast Timer with dual monitor support.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "npx electron-packager . \"Videowaves Timer\" --platform=win32 --arch=x64 --out=dist --overwrite"
+  },
+  "author": "Antigravity",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.9.1",
+    "electron-packager": "^17.1.2",
+    "electron-winstaller": "^5.4.0",
+    "png-to-ico": "^2.1.8",
+    "sharp": "^0.34.5"
+  },
+  "build": {
+    "appId": "com.videowaves.bcasttimer",
+    "productName": "Videowaves Timer",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1",
+    "node-machine-id": "^1.1.12"
+  }
+}

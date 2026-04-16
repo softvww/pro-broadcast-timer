@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videowaves Pro Timer - Activation Required</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050812;
+            --primary-color: #007aff;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-color);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 122, 255, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(88, 86, 214, 0.15), transparent 25%);
+        }
+        .container {
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            padding: 40px;
+            border-radius: 16px;
+            width: 450px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        h1 {
+            margin: 0 0 10px;
+            font-size: 2rem;
+            letter-spacing: 2px;
+        }
+        p {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        .machine-id-box {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+        }
+        .machine-id {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1.1rem;
+            color: #00ffcc;
+            letter-spacing: 1px;
+            word-break: break-all;
+        }
+        .label {
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            box-sizing: border-box;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: white;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1rem;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #005bb5;
+        }
+        .error-msg {
+            color: #ff3b30;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            min-height: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>VIDEOWAVES PRO</h1>
+        <p>This software is protected. To unlock, please provide the Machine ID to your administrator and enter your License Key.</p>
+
+        <div class="machine-id-box">
+            <span class="label">Your Machine ID</span>
+            <div class="machine-id" id="machineIdDisplay">Loading...</div>
+        </div>
+
+        <span class="label" style="text-align: left; margin-bottom: 10px;">License Key</span>
+        <input type="text" id="licenseKeyInput" placeholder="XXXX-XXXX-XXXX-XXXX">
+        
+        <button id="activateBtn">ACTIVATE SOFTWARE</button>
+        <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const machineIdDisplay = document.getElementById('machineIdDisplay');
+            const licenseKeyInput = document.getElementById('licenseKeyInput');
+            const activateBtn = document.getElementById('activateBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            // Fetch Machine ID from Main Process
+            if (window.electronAPI) {
+                const machineId = await window.electronAPI.getMachineId();
+                machineIdDisplay.textContent = machineId;
+            } else {
+                machineIdDisplay.textContent = "DEV-MODE-ID";
+            }
+
+            activateBtn.addEventListener('click', async () => {
+                errorMsg.textContent = '';
+                const key = licenseKeyInput.value.trim();
+                
+                if(!key) {
+                    errorMsg.textContent = 'Please enter a valid License Key.';
+                    return;
+                }
+
+                activateBtn.textContent = 'VERIFYING...';
+                activateBtn.disabled = true;
+
+                if (window.electronAPI) {
+                    const success = await window.electronAPI.verifyLicense(key);
+                    if(success) {
+                        activateBtn.style.background = '#34c759';
+                        activateBtn.textContent = 'ACTIVATED!';
+                        // The main process will automatically redirect to index.html
+                    } else {
+                        setTimeout(() => {
+                            errorMsg.textContent = 'Invalid License Key. Software Locked.';
+                            activateBtn.disabled = false;
+                            activateBtn.textContent = 'ACTIVATE SOFTWARE';
+                            activateBtn.style.background = '';
+                        }, 800);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
