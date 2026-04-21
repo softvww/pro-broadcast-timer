@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, screen } = require('electron');
 if (require('electron-squirrel-startup')) app.quit();
 const path = require('path');
 const fs = require('fs');
+const { Server } = require('node-osc');
 
 
 let mainWindow;
@@ -77,6 +78,21 @@ app.whenReady().then(() => {
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createMainWindow();
+        }
+    });
+
+    // Start OSC Server on port 1212
+    const oscServer = new Server(1212, '0.0.0.0', () => {
+        console.log('OSC Server is listening on port 1212');
+    });
+
+    oscServer.on('message', (msg) => {
+        const [address, ...args] = msg;
+        console.log(`OSC Message received: ${address}`, args);
+        
+        if (mainWindow) {
+            // Forward OSC command to renderer
+            mainWindow.webContents.send('osc-command', { address, args });
         }
     });
 });

@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
-    "node-machine-id": "^1.1.12"
+    "node-machine-id": "^1.1.12",
+    "node-osc": "^11.4.0"
   }
 }

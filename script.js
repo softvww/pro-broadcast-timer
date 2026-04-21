@@ -278,4 +278,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ─── Initial State ──────────────────────────────────────────────
     updateDisplay(totalSeconds);
+
+    // ─── OSC Listener ───────────────────────────────────────────────
+    if (window.electronAPI && window.electronAPI.onOscCommand) {
+        window.electronAPI.onOscCommand((data) => {
+            const { address, args } = data;
+            console.log('Handling OSC Command:', address, args);
+
+            switch (address) {
+                case '/timer/start':
+                    startTimer();
+                    break;
+                case '/timer/stop':
+                    stopTimer();
+                    break;
+                case '/timer/reset':
+                    resetTimer();
+                    break;
+                case '/timer/set':
+                    // Expects minutes as first argument
+                    if (args && args.length > 0) {
+                        const mins = parseInt(args[0]);
+                        if (!isNaN(mins)) {
+                            inputHrs.value = 0;
+                            inputMin.value = Math.min(mins, 60);
+                            inputSec.value = 0;
+                            resetTimer();
+                        }
+                    }
+                    break;
+            }
+        });
+    }
 });
