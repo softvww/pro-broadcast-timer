@@ -5,13 +5,33 @@ const fs = require('fs');
 const { Server } = require('node-osc');
 
 
+let splashWindow;
 let mainWindow;
 let broadcastWindow;
+
+function createSplashScreen() {
+    splashWindow = new BrowserWindow({
+        width: 500,
+        height: 300,
+        transparent: true,
+        frame: false,
+        alwaysOnTop: true,
+        icon: path.join(__dirname, 'icon.ico'),
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true
+        }
+    });
+
+    splashWindow.loadFile('splash.html');
+    splashWindow.center();
+}
 
 function createMainWindow() {
     mainWindow = new BrowserWindow({
         width: 1280,
         height: 720,
+        show: false, // Don't show immediately
         icon: path.join(__dirname, 'icon.ico'),
         title: 'Videowaves Pro Timer - Control Panel',
         webPreferences: {
@@ -22,8 +42,15 @@ function createMainWindow() {
     });
 
     mainWindow.setMenuBarVisibility(false);
-    
     mainWindow.loadFile('index.html');
+
+    mainWindow.once('ready-to-show', () => {
+        // Wait a bit more for the splash to be seen
+        setTimeout(() => {
+            if (splashWindow) splashWindow.close();
+            mainWindow.show();
+        }, 3000);
+    });
 
     mainWindow.on('closed', () => {
         app.quit();
@@ -72,7 +99,9 @@ ipcMain.handle('open-broadcast-window', () => {
     });
 });
 
+
 app.whenReady().then(() => {
+    createSplashScreen();
     createMainWindow();
 
     app.on('activate', () => {
