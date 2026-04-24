@@ -123,6 +123,22 @@ document.addEventListener('DOMContentLoaded', () => {
         bc.postMessage({ type: 'IMAGE', data: { src: null, color: '#ffffff' } });
     });
 
+    // ─── Network Broadcasting ──────────────────────────────────────
+    function broadcastState(statusOverride) {
+        if (window.electronAPI && window.electronAPI.sendTimerState) {
+            let status = 'standby';
+            if (isRunning) status = 'running';
+            else if (totalSeconds > 0 && totalSeconds < ((parseInt(inputHrs.value)||0)*3600 + (parseInt(inputMin.value)||0)*60 + (parseInt(inputSec.value)||0))) status = 'paused';
+            
+            if (statusOverride) status = statusOverride;
+
+            window.electronAPI.sendTimerState({
+                display: timerDisplay.textContent,
+                status: status
+            });
+        }
+    }
+
     // ─── Timer Logic ───────────────────────────────────────────────
     function updateDisplay(seconds) {
         const h = Math.floor(seconds / 3600);
@@ -133,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
         document.title = `${timerDisplay.textContent} — Videowaves Timer`;
         bc.postMessage({ type: 'TICK', data: { display: timerDisplay.textContent, isTimeUp: totalSeconds <= 0 && !isRunning } });
+        broadcastState();
     }
 
     function startTimer() {
@@ -148,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isRunning = true;
         statusBadge.textContent = '● LIVE';
         statusBadge.classList.add('active');
+        broadcastState('running');
         countdown = setInterval(() => {
             totalSeconds--;
             updateDisplay(totalSeconds);
@@ -159,6 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 timeUpOverlay.classList.remove('hidden');
                 playAlarm();
                 updateDisplay(0);
+                broadcastState('standby');
             }
         }, 1000);
     }
@@ -168,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isRunning = false;
         statusBadge.textContent = 'PAUSED';
         statusBadge.classList.remove('active');
+        broadcastState('paused');
     }
 
     function resetTimer() {
@@ -179,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bc.postMessage({ type: 'RESET', data: { display: timerDisplay.textContent } });
         alarmAudio.pause();
         alarmAudio.currentTime = 0;
+        broadcastState('standby');
     }
 
     function playAlarm() {
@@ -279,24 +300,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── Initial State ──────────────────────────────────────────────
     updateDisplay(totalSeconds);
 
-    // ─── OSC Listener ───────────────────────────────────────────────
+    // ─── OSC / Network Commands ──────────────────────────────────────
     if (window.electronAPI && window.electronAPI.onOscCommand) {
         window.electronAPI.onOscCommand((data) => {
             const { address, args } = data;
-            console.log('Handling OSC Command:', address, args);
-
             switch (address) {
-                case '/timer/start':
-                    startTimer();
+                case '/timer/start':   startTimer();  break;
+                case '/timer/stop':    stopTimer();   break;
+                case '/timer/reset':   resetTimer();  break;
+                case '/timer/holding':
+                    holdingBtn.click();
                     break;
-                case '/timer/stop':
-                    stopTimer();
-                    break;
-                case '/timer/reset':
-                    resetTimer();
+                case '/timer/push':
+                    if (args && args[0]) {
+                        pushMsgInput.value = args[0];
+                        pushMessage();
+                    }
                     break;
                 case '/timer/set':
-                    // Expects minutes as first argument
                     if (args && args.length > 0) {
                         const mins = parseInt(args[0]);
                         if (!isNaN(mins)) {
@@ -307,7 +328,42 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     break;
+                case '/timer/set-hms':
+                    if (args && args.length >= 3) {
+                        inputHrs.value = parseInt(args[0]) || 0;
+                        inputMin.value = parseInt(args[1]) || 0;
+                        inputSec.value = parseInt(args[2]) || 0;
+                        resetTimer();
+                    }
+                    break;
             }
         });
     }
+
+    // ─── Show Network IP & QR in UI ───────────────────────────────────
+    if (window.electronAPI && window.electronAPI.onNetworkIP) {
+        window.electronAPI.onNetworkIP((data) => {
+            const box = document.getElementById('network-ip-display');
+            const urlText = document.getElementById('network-url-text');
+            const qrImg = document.getElementById('qr-code-img');
+            
+            if (box && urlText && qrImg) {
+                urlText.textContent = `http://${data.ip}:${data.port}`;
+                if (data.qr) qrImg.src = data.qr;
+                box.style.display = 'flex';
+            }
+        });
+    }
+
+    // ─── Help Modal Logic ──────────────────────────────────────────────
+    const helpBtn = document.getElementById('help-btn');
+    const closeHelpBtn = document.getElementById('close-help-btn');
+    const helpModal = document.getElementById('help-modal');
+
+    if (helpBtn && closeHelpBtn && helpModal) {
+        helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
+        closeHelpBtn.addEventListener('click', () => helpModal.classList.add('hidden'));
+    }
+
 });
+

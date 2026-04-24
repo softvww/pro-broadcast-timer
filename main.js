@@ -3,6 +3,26 @@ if (require('electron-squirrel-startup')) app.quit();
 const path = require('path');
 const fs = require('fs');
 const { Server } = require('node-osc');
+const http = require('http');
+const { WebSocketServer } = require('ws');
+const os = require('os');
+const QRCode = require('qrcode');
+
+// Get local WiFi IP address
+function getLocalIP() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return '127.0.0.1';
+}
+
+const WEB_PORT = 3030;
+let wss; // WebSocket server reference
 
 
 let splashWindow;
@@ -110,19 +130,66 @@ app.whenReady().then(() => {
         }
     });
 
-    // Start OSC Server on port 1212
+    // ── OSC Server (Bitfocus Companion) port 1212 ──
     const oscServer = new Server(1212, '0.0.0.0', () => {
-        console.log('OSC Server is listening on port 1212');
+        console.log('OSC Server listening on port 1212');
     });
-
     oscServer.on('message', (msg) => {
         const [address, ...args] = msg;
-        console.log(`OSC Message received: ${address}`, args);
-        
-        if (mainWindow) {
-            // Forward OSC command to renderer
-            mainWindow.webContents.send('osc-command', { address, args });
+        if (mainWindow) mainWindow.webContents.send('osc-command', { address, args });
+    });
+
+    // ── HTTP + WebSocket Network Control Server port 3030 ──
+    const controlPanelHTML = fs.readFileSync(path.join(__dirname, 'control-panel.html'), 'utf8');
+
+    const httpServer = http.createServer((req, res) => {
+        if (req.url === '/' || req.url === '/index.html') {
+            const ip   = getLocalIP();
+            const html = controlPanelHTML.replace('__SERVER_IP__', ip).replace('__SERVER_PORT__', WEB_PORT);
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(html);
+        } else {
+            res.writeHead(404); res.end('Not found');
         }
+    });
+
+    wss = new WebSocketServer({ server: httpServer });
+
+    wss.on('connection', (ws) => {
+        console.log('Network client connected');
+        // Send current timer state to newly connected client
+        if (mainWindow) mainWindow.webContents.send('request-state', {});
+
+        ws.on('message', (raw) => {
+            try {
+                const cmd = JSON.parse(raw);
+                // Forward command to renderer (same as OSC)
+                if (mainWindow) mainWindow.webContents.send('osc-command', { address: cmd.address, args: cmd.args || [] });
+            } catch(e) { console.error('WS parse error', e); }
+        });
+        ws.on('close', () => console.log('Network client disconnected'));
+    });
+
+    // Broadcast timer state updates to all connected web clients
+    ipcMain.on('timer-state-update', (event, state) => {
+        if (!wss) return;
+        const msg = JSON.stringify(state);
+        wss.clients.forEach(client => {
+            if (client.readyState === 1) client.send(msg);
+        });
+    });
+
+    httpServer.listen(WEB_PORT, '0.0.0.0', () => {
+        const ip = getLocalIP();
+        const url = `http://${ip}:${WEB_PORT}`;
+        console.log(`\n🌐 Network Control Panel: ${url}\n`);
+        
+        // Notify renderer with the IP and generate a QR Code
+        mainWindow.webContents.once('did-finish-load', () => {
+            QRCode.toDataURL(url, { margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
+                mainWindow.webContents.send('network-ip', { ip, port: WEB_PORT, qr: qrUrl });
+            });
+        });
     });
 });
 

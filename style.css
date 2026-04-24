@@ -273,7 +273,18 @@ body {
     letter-spacing: 2px;
     color: var(--faded-text);
     text-transform: uppercase;
+    flex: 1;
 }
+
+.network-remote-box {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.2);
+    padding: 6px 12px; border-radius: 8px;
+}
+.qr-code-img { width: 36px; height: 36px; border-radius: 4px; background: rgba(0,0,0,0.5); }
+.network-text { display: flex; flex-direction: column; gap: 2px; }
+.network-title { font-size: 0.65rem; color: #00d4ff; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.network-url { font-size: 0.75rem; color: #fff; font-family: 'Roboto Mono', monospace; }
 
 .control-group {
     display: flex;
