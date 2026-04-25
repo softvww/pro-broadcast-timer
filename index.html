@@ -126,5 +126,39 @@
     <audio id="alarm-audio"></audio>
 
     <script src="script.js"></script>
+
+    <!-- FIREBASE SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Security: Listen for Machine ID changes
+        const key = localStorage.getItem('vw_license_key');
+        if (key && window.electronAPI) {
+            const machineId = await window.electronAPI.getMachineId();
+            const docRef = doc(db, "licenses", key);
+            
+            onSnapshot(docRef, (snapshot) => {
+                const data = snapshot.data();
+                if (data && data.machineId && data.machineId !== machineId) {
+                    alert("This license was activated on another laptop. Closing this session...");
+                    window.close();
+                }
+            });
+        }
+    </script>
 </body>
 </html>

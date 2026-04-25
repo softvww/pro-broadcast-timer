@@ -105,6 +105,10 @@
         button:hover {
             background: #005bb5;
         }
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
         .error-msg {
             color: #ff3b30;
             font-size: 0.85rem;
@@ -117,7 +121,7 @@
 
     <div class="container">
         <h1>VIDEOWAVES PRO</h1>
-        <p>This software is protected. To unlock, please provide the Machine ID to your administrator and enter your License Key.</p>
+        <p>This software is protected. Enter your License Key (sent to your email) to activate.</p>
 
         <div class="machine-id-box">
             <span class="label">Your Machine ID</span>
@@ -125,26 +129,50 @@
         </div>
 
         <span class="label" style="text-align: left; margin-bottom: 10px;">License Key</span>
-        <input type="text" id="licenseKeyInput" placeholder="XXXX-XXXX-XXXX-XXXX">
+        <input type="text" id="licenseKeyInput" placeholder="VW-XXXX-XXXX-XXXX">
         
         <button id="activateBtn">ACTIVATE SOFTWARE</button>
         <div class="error-msg" id="errorMsg"></div>
     </div>
 
-    <script>
+    <!-- FIREBASE SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+        // Replace with your Firebase config
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         document.addEventListener('DOMContentLoaded', async () => {
             const machineIdDisplay = document.getElementById('machineIdDisplay');
             const licenseKeyInput = document.getElementById('licenseKeyInput');
             const activateBtn = document.getElementById('activateBtn');
             const errorMsg = document.getElementById('errorMsg');
 
-            // Fetch Machine ID from Main Process
+            let machineId = "DEV-MODE-ID";
             if (window.electronAPI) {
-                const machineId = await window.electronAPI.getMachineId();
-                machineIdDisplay.textContent = machineId;
-            } else {
-                machineIdDisplay.textContent = "DEV-MODE-ID";
+                machineId = await window.electronAPI.getMachineId();
             }
+            machineIdDisplay.textContent = machineId;
+
+            // Auto-check saved license
+            const savedKey = localStorage.getItem('vw_license_key');
+            if (savedKey) {
+                licenseKeyInput.value = savedKey;
+                activateBtn.click(); // auto-verify
+            }
+
+            let unsubscribe = null; // for realtime listener
 
             activateBtn.addEventListener('click', async () => {
                 errorMsg.textContent = '';
@@ -158,22 +186,87 @@
                 activateBtn.textContent = 'VERIFYING...';
                 activateBtn.disabled = true;
 
-                if (window.electronAPI) {
-                    const success = await window.electronAPI.verifyLicense(key);
-                    if(success) {
-                        activateBtn.style.background = '#34c759';
-                        activateBtn.textContent = 'ACTIVATED!';
-                        // The main process will automatically redirect to index.html
+                try {
+                    const docRef = doc(db, "licenses", key);
+                    const docSnap = await getDoc(docRef);
+
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        
+                        if (data.status !== "active") {
+                            showError("License is deactivated or suspended.");
+                            return;
+                        }
+
+                        // If machineId is empty or matches this laptop, allow
+                        if (!data.machineId || data.machineId === machineId) {
+                            // Update Firestore to lock to this machine
+                            await setDoc(docRef, { machineId: machineId }, { merge: true });
+                            
+                            localStorage.setItem('vw_license_key', key);
+                            
+                            activateBtn.style.background = '#34c759';
+                            activateBtn.textContent = 'ACTIVATED!';
+
+                            // Start listening for changes (if another laptop logs in)
+                            if (unsubscribe) unsubscribe();
+                            unsubscribe = onSnapshot(docRef, (snapshot) => {
+                                const currentData = snapshot.data();
+                                if (currentData && currentData.machineId !== machineId) {
+                                    // Another device logged in using this key!
+                                    alert("Session Ended: Your License Key was activated on another laptop.");
+                                    localStorage.removeItem('vw_license_key');
+                                    // App logic to close/reload would go here
+                                    // In Electron, we can tell the main process to exit or reload
+                                    window.close(); 
+                                }
+                            });
+
+                            setTimeout(() => {
+                                if (window.electronAPI) {
+                                    window.electronAPI.activationSuccess();
+                                }
+                            }, 1000);
+                        } else {
+                            // The key is being used by another machine, but they just entered it here
+                            // So we TRANSFER the license to this machine!
+                            // This means the other machine will get the 'onSnapshot' trigger and get kicked out!
+                            
+                            const confirmTransfer = confirm(`This License is already active on another machine.\nDo you want to transfer it to this laptop? (The other laptop will be logged out)`);
+                            
+                            if (confirmTransfer) {
+                                await setDoc(docRef, { machineId: machineId }, { merge: true });
+                                localStorage.setItem('vw_license_key', key);
+                                
+                                activateBtn.style.background = '#34c759';
+                                activateBtn.textContent = 'TRANSFERRED!';
+
+                                setTimeout(() => {
+                                    if (window.electronAPI) {
+                                        window.electronAPI.activationSuccess();
+                                    }
+                                }, 1000);
+                            } else {
+                                showError("Transfer cancelled.");
+                            }
+                        }
+
                     } else {
-                        setTimeout(() => {
-                            errorMsg.textContent = 'Invalid License Key. Software Locked.';
-                            activateBtn.disabled = false;
-                            activateBtn.textContent = 'ACTIVATE SOFTWARE';
-                            activateBtn.style.background = '';
-                        }, 800);
+                        showError("Invalid License Key. Not found in database.");
                     }
+
+                } catch (e) {
+                    console.error(e);
+                    showError("Network error. Could not connect to licensing server.");
                 }
             });
+
+            function showError(msg) {
+                errorMsg.textContent = msg;
+                activateBtn.disabled = false;
+                activateBtn.textContent = 'ACTIVATE SOFTWARE';
+                activateBtn.style.background = '';
+            }
         });
     </script>
 </body>
