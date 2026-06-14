@@ -40,6 +40,14 @@
 
             <!-- Timer Content -->
             <div class="content-layer" id="timer-content">
+                <!-- Large Push Message Area (Above Timer) -->
+                <div class="large-push-overlay hidden" id="large-push-overlay">
+                    <div class="large-push-content">
+                        <span class="large-push-label">ANNOUNCEMENT</span>
+                        <h2 id="large-push-text"></h2>
+                    </div>
+                </div>
+
                 <div class="timer-display" id="timer-display">00:00:00</div>
                 <div class="timer-label" id="timer-label">COUNTDOWN</div>
             </div>
@@ -58,6 +66,8 @@
         const holdingImage = document.getElementById('holding-image');
         const pushTicker = document.getElementById('push-ticker');
         const pushTickerText = document.getElementById('push-ticker-text');
+        const largePushOverlay = document.getElementById('large-push-overlay');
+        const largePushText = document.getElementById('large-push-text');
 
         bc.onmessage = (event) => {
             const { type, data } = event.data;
@@ -111,9 +121,14 @@
                 if (data.text && data.text.trim() !== '') {
                     pushTickerText.textContent = data.text;
                     pushTicker.classList.remove('hidden');
+                    // Large Overlay Update
+                    largePushText.textContent = data.text;
+                    largePushOverlay.classList.remove('hidden');
                 } else {
                     pushTicker.classList.add('hidden');
                     pushTickerText.textContent = '';
+                    // Large Overlay Hide
+                    largePushOverlay.classList.add('hidden');
                 }
             }
 

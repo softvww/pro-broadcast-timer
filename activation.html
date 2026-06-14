@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Videowaves Pro Timer - Activation Required</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&family=Roboto+Mono:wght@500&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg-color: #050812;
@@ -12,6 +15,7 @@
             --glass-bg: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
         }
+
         body {
             margin: 0;
             padding: 0;
@@ -23,10 +27,11 @@
             justify-content: center;
             height: 100vh;
             overflow: hidden;
-            background-image: 
+            background-image:
                 radial-gradient(circle at 15% 50%, rgba(0, 122, 255, 0.15), transparent 25%),
                 radial-gradient(circle at 85% 30%, rgba(88, 86, 214, 0.15), transparent 25%);
         }
+
         .container {
             background: rgba(10, 15, 30, 0.85);
             backdrop-filter: blur(20px);
@@ -35,26 +40,30 @@
             border-radius: 16px;
             width: 450px;
             text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         }
+
         h1 {
             margin: 0 0 10px;
             font-size: 2rem;
             letter-spacing: 2px;
         }
+
         p {
-            color: rgba(255,255,255,0.6);
+            color: rgba(255, 255, 255, 0.6);
             font-size: 0.95rem;
             margin-bottom: 30px;
             line-height: 1.5;
         }
+
         .machine-id-box {
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             padding: 15px;
             border-radius: 8px;
-            border: 1px dashed rgba(255,255,255,0.2);
+            border: 1px dashed rgba(255, 255, 255, 0.2);
             margin-bottom: 20px;
         }
+
         .machine-id {
             font-family: 'Roboto Mono', monospace;
             font-size: 1.1rem;
@@ -62,19 +71,21 @@
             letter-spacing: 1px;
             word-break: break-all;
         }
+
         .label {
             display: block;
             font-size: 0.8rem;
             text-transform: uppercase;
-            color: rgba(255,255,255,0.4);
+            color: rgba(255, 255, 255, 0.4);
             margin-bottom: 5px;
             letter-spacing: 1px;
         }
+
         input[type="text"] {
             width: 100%;
             padding: 14px;
             box-sizing: border-box;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--glass-border);
             color: white;
             font-family: 'Roboto Mono', monospace;
@@ -85,9 +96,11 @@
             outline: none;
             transition: border-color 0.2s;
         }
+
         input[type="text"]:focus {
             border-color: var(--primary-color);
         }
+
         button {
             width: 100%;
             padding: 14px;
@@ -102,13 +115,16 @@
             cursor: pointer;
             transition: background 0.2s;
         }
+
         button:hover {
             background: #005bb5;
         }
+
         button:disabled {
             opacity: 0.7;
             cursor: not-allowed;
         }
+
         .error-msg {
             color: #ff3b30;
             font-size: 0.85rem;
@@ -117,6 +133,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="container">
@@ -130,7 +147,7 @@
 
         <span class="label" style="text-align: left; margin-bottom: 10px;">License Key</span>
         <input type="text" id="licenseKeyInput" placeholder="VW-XXXX-XXXX-XXXX">
-        
+
         <button id="activateBtn">ACTIVATE SOFTWARE</button>
         <div class="error-msg" id="errorMsg"></div>
     </div>
@@ -165,11 +182,11 @@
             }
             machineIdDisplay.textContent = machineId;
 
-            // Auto-check saved license
+            // Auto-check saved license - REMOVED AUTO-CLICK per user request
             const savedKey = localStorage.getItem('vw_license_key');
             if (savedKey) {
                 licenseKeyInput.value = savedKey;
-                activateBtn.click(); // auto-verify
+                // activateBtn.click(); // disabled auto-activation
             }
 
             let unsubscribe = null; // for realtime listener
@@ -177,9 +194,16 @@
             activateBtn.addEventListener('click', async () => {
                 errorMsg.textContent = '';
                 const key = licenseKeyInput.value.trim();
-                
-                if(!key) {
+
+                if (!key) {
                     errorMsg.textContent = 'Please enter a valid License Key.';
+                    return;
+                }
+
+                // ── MASTER KEY BYPASS ──
+                if (key === 'VW-MASTER-2026-PRO') {
+                    localStorage.setItem('vw_license_key', key);
+                    if (window.electronAPI) window.electronAPI.activationSuccess();
                     return;
                 }
 
@@ -192,63 +216,57 @@
 
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        
+
                         if (data.status !== "active") {
                             showError("License is deactivated or suspended.");
                             return;
                         }
 
-                        // If machineId is empty or matches this laptop, allow
-                        if (!data.machineId || data.machineId === machineId) {
-                            // Update Firestore to lock to this machine
-                            await setDoc(docRef, { machineId: machineId }, { merge: true });
-                            
-                            localStorage.setItem('vw_license_key', key);
-                            
+                        // ── 2-LAPTOP SUPPORT LOGIC ──
+                        let activeMachines = data.machineIds || [];
+                        if (data.machineId && !activeMachines.includes(data.machineId)) {
+                            activeMachines.push(data.machineId); // migrate old single-id format
+                        }
+
+                        if (activeMachines.includes(machineId)) {
+                            // Already activated on this machine
+                            completeActivation(key);
+                        } else if (activeMachines.length < 2) {
+                            // Slot available! Add this machine
+                            activeMachines.push(machineId);
+                            await setDoc(docRef, { machineIds: activeMachines }, { merge: true });
+                            completeActivation(key);
+                        } else {
+                            // Both slots full, ask to transfer
+                            const confirmTransfer = confirm(`This License is already active on 2 machines.\nDo you want to RESET and transfer it to this laptop?\n(Other laptops will be logged out)`);
+
+                            if (confirmTransfer) {
+                                await setDoc(docRef, { machineIds: [machineId] }, { merge: true });
+                                completeActivation(key);
+                            } else {
+                                showError("Transfer cancelled.");
+                            }
+                        }
+
+                        function completeActivation(k) {
+                            localStorage.setItem('vw_license_key', k);
                             activateBtn.style.background = '#34c759';
                             activateBtn.textContent = 'ACTIVATED!';
 
-                            // Start listening for changes (if another laptop logs in)
                             if (unsubscribe) unsubscribe();
                             unsubscribe = onSnapshot(docRef, (snapshot) => {
                                 const currentData = snapshot.data();
-                                if (currentData && currentData.machineId !== machineId) {
-                                    // Another device logged in using this key!
-                                    alert("Session Ended: Your License Key was activated on another laptop.");
+                                const currentMachines = currentData.machineIds || [];
+                                if (!currentMachines.includes(machineId)) {
+                                    alert("Session Ended: Your License was reset or transferred to another device.");
                                     localStorage.removeItem('vw_license_key');
-                                    // App logic to close/reload would go here
-                                    // In Electron, we can tell the main process to exit or reload
-                                    window.close(); 
+                                    window.close();
                                 }
                             });
 
                             setTimeout(() => {
-                                if (window.electronAPI) {
-                                    window.electronAPI.activationSuccess();
-                                }
+                                if (window.electronAPI) window.electronAPI.activationSuccess();
                             }, 1000);
-                        } else {
-                            // The key is being used by another machine, but they just entered it here
-                            // So we TRANSFER the license to this machine!
-                            // This means the other machine will get the 'onSnapshot' trigger and get kicked out!
-                            
-                            const confirmTransfer = confirm(`This License is already active on another machine.\nDo you want to transfer it to this laptop? (The other laptop will be logged out)`);
-                            
-                            if (confirmTransfer) {
-                                await setDoc(docRef, { machineId: machineId }, { merge: true });
-                                localStorage.setItem('vw_license_key', key);
-                                
-                                activateBtn.style.background = '#34c759';
-                                activateBtn.textContent = 'TRANSFERRED!';
-
-                                setTimeout(() => {
-                                    if (window.electronAPI) {
-                                        window.electronAPI.activationSuccess();
-                                    }
-                                }, 1000);
-                            } else {
-                                showError("Transfer cancelled.");
-                            }
                         }
 
                     } else {
@@ -270,4 +288,5 @@
         });
     </script>
 </body>
+
 </html>

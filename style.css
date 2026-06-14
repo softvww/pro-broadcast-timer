@@ -397,3 +397,56 @@ input[type="text"] { width: 200px; }
 
 /* ─── Broadcast Mode (hides cursor) ─── */
 .broadcast-mode { cursor: none !important; }
+
+/* Large Push Message Overlay */
+.large-push-overlay {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    z-index: 99999;
+    text-align: center;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.large-push-content {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(20px);
+    border: 2px solid var(--primary-color);
+    padding: 30px 60px;
+    display: inline-block;
+    border-radius: 20px;
+    box-shadow: 0 0 50px rgba(0, 212, 255, 0.4);
+}
+
+.large-push-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 900;
+    color: #00d4ff;
+    letter-spacing: 4px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+#large-push-text {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #ffffff;
+    margin: 0;
+    text-transform: uppercase;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    letter-spacing: 1px;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translate(-50%, -20px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (max-width: 1200px) {
+    #large-push-text { font-size: 2.5rem; }
+}

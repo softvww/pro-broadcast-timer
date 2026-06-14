@@ -7,6 +7,7 @@ const http = require('http');
 const { WebSocketServer } = require('ws');
 const os = require('os');
 const QRCode = require('qrcode');
+const localtunnel = require('localtunnel');
 
 // Get local WiFi IP address — works on ANY network automatically
 function getLocalIP() {
@@ -33,8 +34,8 @@ function getLocalIP() {
     const sorted = ips.sort((a, b) => {
         const score = (ip) => {
             if (ip.startsWith('192.168.')) return 0;
-            if (ip.startsWith('10.'))      return 1;
-            if (ip.startsWith('172.'))     return 2;
+            if (ip.startsWith('10.')) return 1;
+            if (ip.startsWith('172.')) return 2;
             return 3;
         };
         return score(a) - score(b);
@@ -46,6 +47,7 @@ function getLocalIP() {
 
 const WEB_PORT = 3030;
 let wss; // WebSocket server reference
+let globalTunnelUrl = null;
 
 
 let splashWindow;
@@ -130,9 +132,11 @@ function createMainWindow() {
     if (wss) {
         mainWindow.webContents.once('did-finish-load', () => {
             const ip = getLocalIP();
-            const url = `http://${ip}:${WEB_PORT}`;
-            QRCode.toDataURL(url, { width: 300, margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
-                mainWindow.webContents.send('network-ip', { ip, port: WEB_PORT, qr: qrUrl });
+            const localUrl = `http://${ip}:${WEB_PORT}`;
+            const globalUrl = globalTunnelUrl || 'Creating...';
+
+            QRCode.toDataURL(globalTunnelUrl || localUrl, { width: 300, margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
+                mainWindow.webContents.send('network-ip', { ip, port: WEB_PORT, qr: qrUrl, globalUrl: globalTunnelUrl });
             });
         });
     }
@@ -221,7 +225,7 @@ app.whenReady().then(() => {
 
     const httpServer = http.createServer((req, res) => {
         if (req.url === '/' || req.url === '/index.html') {
-            const ip   = getLocalIP();
+            const ip = getLocalIP();
             const html = controlPanelHTML.replace('__SERVER_IP__', ip).replace('__SERVER_PORT__', WEB_PORT);
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
             res.end(html);
@@ -242,7 +246,7 @@ app.whenReady().then(() => {
                 const cmd = JSON.parse(raw);
                 // Forward command to renderer (same as OSC)
                 if (mainWindow) mainWindow.webContents.send('osc-command', { address: cmd.address, args: cmd.args || [] });
-            } catch(e) { console.error('WS parse error', e); }
+            } catch (e) { console.error('WS parse error', e); }
         });
         ws.on('close', () => console.log('Network client disconnected'));
     });
@@ -256,15 +260,35 @@ app.whenReady().then(() => {
         });
     });
 
-    httpServer.listen(WEB_PORT, '0.0.0.0', () => {
+    httpServer.listen(WEB_PORT, '0.0.0.0', async () => {
         const ip = getLocalIP();
-        const url = `http://${ip}:${WEB_PORT}`;
-        console.log(`\n🌐 Network Control Panel: ${url}\n`);
-        
+        const localUrl = `http://${ip}:${WEB_PORT}`;
+        console.log(`\n🌐 Local Network Control Panel: ${localUrl}\n`);
+
+        // --- START LOCALTUNNEL ---
+        try {
+            const tunnel = await localtunnel({ port: WEB_PORT });
+            globalTunnelUrl = tunnel.url;
+            console.log(`\n🌍 GLOBAL URL (Use from any network): ${globalTunnelUrl}\n`);
+
+            tunnel.on('close', () => {
+                console.log('Tunnel closed');
+                globalTunnelUrl = null;
+            });
+        } catch (err) {
+            console.error('Localtunnel failed:', err);
+        }
+
         // Notify renderer with the IP and generate a QR Code
         mainWindow.webContents.once('did-finish-load', () => {
-            QRCode.toDataURL(url, { width: 300, margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
-                mainWindow.webContents.send('network-ip', { ip, port: WEB_PORT, qr: qrUrl });
+            const displayUrl = globalTunnelUrl || localUrl;
+            QRCode.toDataURL(displayUrl, { width: 300, margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
+                mainWindow.webContents.send('network-ip', {
+                    ip,
+                    port: WEB_PORT,
+                    qr: qrUrl,
+                    globalUrl: globalTunnelUrl
+                });
             });
         });
     });

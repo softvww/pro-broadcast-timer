@@ -1,38 +1,40 @@
 document.addEventListener('DOMContentLoaded', () => {
     // ─── Elements ───────────────────────────────────────────────
-    const timerDisplay    = document.getElementById('timer-display');
-    const statusBadge     = document.getElementById('status-badge');
-    const startBtn        = document.getElementById('start-btn');
-    const stopBtn         = document.getElementById('stop-btn');
-    const resetBtn        = document.getElementById('reset-btn');
-    const holdingBtn      = document.getElementById('holding-toggle');
+    const timerDisplay = document.getElementById('timer-display');
+    const statusBadge = document.getElementById('status-badge');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const holdingBtn = document.getElementById('holding-toggle');
 
-    const inputHrs        = document.getElementById('input-hours');
-    const inputMin        = document.getElementById('input-minutes');
-    const inputSec        = document.getElementById('input-seconds');
+    const inputHrs = document.getElementById('input-hours');
+    const inputMin = document.getElementById('input-minutes');
+    const inputSec = document.getElementById('input-seconds');
 
-    const holdingInput    = document.getElementById('holding-input');
-    const holdingText     = document.getElementById('holding-text');
-    const holdingSubtext  = document.getElementById('holding-subtext');
+    const holdingInput = document.getElementById('holding-input');
+    const holdingText = document.getElementById('holding-text');
+    const holdingSubtext = document.getElementById('holding-subtext');
     const holdingClearBtn = document.getElementById('holding-clear-text-btn');
-    const holdingTextBlock= document.getElementById('holding-text-block');
+    const holdingTextBlock = document.getElementById('holding-text-block');
 
-    const audioUpload     = document.getElementById('audio-upload');
-    const alarmAudio      = document.getElementById('alarm-audio');
+    const audioUpload = document.getElementById('audio-upload');
+    const alarmAudio = document.getElementById('alarm-audio');
 
-    const timerContent    = document.getElementById('timer-content');
-    const holdingOverlay  = document.getElementById('holding-overlay');
-    const timeUpOverlay   = document.getElementById('time-up-overlay');
-    const broadcastBtn    = document.getElementById('broadcast-btn');
-    const holdingImage    = document.getElementById('holding-image');
-    const imageUpload     = document.getElementById('image-upload');
-    const clearImageBtn   = document.getElementById('clear-image-btn');
+    const timerContent = document.getElementById('timer-content');
+    const holdingOverlay = document.getElementById('holding-overlay');
+    const timeUpOverlay = document.getElementById('time-up-overlay');
+    const broadcastBtn = document.getElementById('broadcast-btn');
+    const holdingImage = document.getElementById('holding-image');
+    const imageUpload = document.getElementById('image-upload');
+    const clearImageBtn = document.getElementById('clear-image-btn');
 
-    const pushMsgInput    = document.getElementById('push-msg-input');
-    const pushMsgBtn      = document.getElementById('push-msg-btn');
-    const clearPushBtn    = document.getElementById('clear-push-btn');
-    const pushTicker      = document.getElementById('push-ticker');
-    const pushTickerText  = document.getElementById('push-ticker-text');
+    const pushMsgInput = document.getElementById('push-msg-input');
+    const pushMsgBtn = document.getElementById('push-msg-btn');
+    const clearPushBtn = document.getElementById('clear-push-btn');
+    const pushTicker = document.getElementById('push-ticker');
+    const pushTickerText = document.getElementById('push-ticker-text');
+    const largePushOverlay = document.getElementById('large-push-overlay');
+    const largePushText = document.getElementById('large-push-text');
 
     // ─── Sync Channel ────────────────────────────────────────────
     const bc = new BroadcastChannel('timer_sync');
@@ -63,8 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── Variables ───────────────────────────────────────────────
     let countdown;
     let totalSeconds = 300;
-    let isRunning    = false;
-    let isHolding    = false;
+    let isRunning = false;
+    let isHolding = false;
     let holdingImageDataUrl = null;
 
     // ─── Audio Upload ─────────────────────────────────────────────
@@ -94,11 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const imageData = ctx.getImageData(0, 0, 100, 56).data;
                 let bestColor = null, bestScore = -1;
                 for (let i = 0; i < imageData.length; i += 16) {
-                    const r = imageData[i], g = imageData[i+1], b = imageData[i+2], a = imageData[i+3];
+                    const r = imageData[i], g = imageData[i + 1], b = imageData[i + 2], a = imageData[i + 3];
                     if (a < 128) continue;
-                    const max = Math.max(r,g,b)/255, min = Math.min(r,g,b)/255;
+                    const max = Math.max(r, g, b) / 255, min = Math.min(r, g, b) / 255;
                     const lightness = (max + min) / 2;
-                    const saturation = max === min ? 0 : (max - min) / (1 - Math.abs(2*lightness-1));
+                    const saturation = max === min ? 0 : (max - min) / (1 - Math.abs(2 * lightness - 1));
                     const score = saturation * (1 - Math.abs(lightness - 0.55));
                     if (score > bestScore) { bestScore = score; bestColor = `rgb(${r},${g},${b})`; }
                 }
@@ -128,8 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.electronAPI && window.electronAPI.sendTimerState) {
             let status = 'standby';
             if (isRunning) status = 'running';
-            else if (totalSeconds > 0 && totalSeconds < ((parseInt(inputHrs.value)||0)*3600 + (parseInt(inputMin.value)||0)*60 + (parseInt(inputSec.value)||0))) status = 'paused';
-            
+            else if (totalSeconds > 0 && totalSeconds < ((parseInt(inputHrs.value) || 0) * 3600 + (parseInt(inputMin.value) || 0) * 60 + (parseInt(inputSec.value) || 0))) status = 'paused';
+
             if (statusOverride) status = statusOverride;
 
             window.electronAPI.sendTimerState({
@@ -145,8 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const m = Math.floor((seconds % 3600) / 60);
         const s = seconds % 60;
         timerDisplay.textContent = h > 0
-            ? `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-            : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+            : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         document.title = `${timerDisplay.textContent} — Videowaves Timer`;
         bc.postMessage({ type: 'TICK', data: { display: timerDisplay.textContent, isTimeUp: totalSeconds <= 0 && !isRunning } });
         broadcastState();
@@ -192,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resetTimer() {
         stopTimer();
-        totalSeconds = (parseInt(inputHrs.value)||0)*3600 + (parseInt(inputMin.value)||0)*60 + (parseInt(inputSec.value)||0);
+        totalSeconds = (parseInt(inputHrs.value) || 0) * 3600 + (parseInt(inputMin.value) || 0) * 60 + (parseInt(inputSec.value) || 0);
         updateDisplay(totalSeconds);
         statusBadge.textContent = 'STANDBY';
         timeUpOverlay.classList.add('hidden');
@@ -258,14 +260,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (msg !== '') {
             pushTickerText.textContent = msg;
             pushTicker.classList.remove('hidden');
+
+            largePushText.textContent = msg;
+            largePushOverlay.classList.remove('hidden');
+            bc.postMessage({ type: 'PUSH_MSG', data: { text: msg } });
+        } else {
+            clearPushMessage();
         }
-        bc.postMessage({ type: 'PUSH_MSG', data: { text: msg } });
     }
 
     function clearPushMessage() {
         pushMsgInput.value = '';
         pushTicker.classList.add('hidden');
         pushTickerText.textContent = '';
+
+        largePushOverlay.classList.add('hidden');
+        largePushText.textContent = '';
+
         bc.postMessage({ type: 'PUSH_MSG', data: { text: '' } });
     }
 
@@ -305,14 +316,14 @@ document.addEventListener('DOMContentLoaded', () => {
         window.electronAPI.onOscCommand((data) => {
             const { address, args } = data;
             switch (address) {
-                case '/timer/start':   startTimer();  break;
-                case '/timer/stop':    stopTimer();   break;
-                case '/timer/reset':   resetTimer();  break;
+                case '/timer/start': startTimer(); break;
+                case '/timer/stop': stopTimer(); break;
+                case '/timer/reset': resetTimer(); break;
                 case '/timer/holding':
                     holdingBtn.click();
                     break;
                 case '/timer/push':
-                    if (args && args[0]) {
+                    if (args && args[0] !== undefined) {
                         pushMsgInput.value = args[0];
                         pushMessage();
                     }
@@ -346,9 +357,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const box = document.getElementById('network-ip-display');
             const urlText = document.getElementById('network-url-text');
             const qrImg = document.getElementById('qr-code-img');
-            
+
             if (box && urlText && qrImg) {
-                urlText.textContent = `http://${data.ip}:${data.port}`;
+                if (data.globalUrl) {
+                    urlText.innerHTML = `<span style="color:#34c759;font-weight:bold;">GLOBAL:</span> ${data.globalUrl}`;
+                } else {
+                    urlText.textContent = `http://${data.ip}:${data.port}`;
+                }
                 if (data.qr) qrImg.src = data.qr;
                 box.style.display = 'flex';
             }
