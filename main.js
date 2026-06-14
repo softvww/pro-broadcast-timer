@@ -8,13 +8,16 @@ const { WebSocketServer } = require('ws');
 const os = require('os');
 const QRCode = require('qrcode');
 
-// Get local WiFi IP address
+// Get local WiFi IP address — works on ANY network automatically
 function getLocalIP() {
     const interfaces = os.networkInterfaces();
     const ips = [];
     for (const name of Object.keys(interfaces)) {
-        // Skip virtual interfaces like Docker, VirtualBox, vEthernet
-        if (name.toLowerCase().includes('virtual') || name.toLowerCase().includes('docker') || name.toLowerCase().includes('vbox') || name.toLowerCase().includes('vethernet')) {
+        // Skip virtual interfaces like Docker, VirtualBox, vEthernet, Hyper-V
+        const nameLower = name.toLowerCase();
+        if (nameLower.includes('virtual') || nameLower.includes('docker') ||
+            nameLower.includes('vbox') || nameLower.includes('vethernet') ||
+            nameLower.includes('hyper-v') || nameLower.includes('loopback')) {
             continue;
         }
         for (const iface of interfaces[name]) {
@@ -26,15 +29,18 @@ function getLocalIP() {
 
     if (ips.length === 0) return '127.0.0.1';
 
-    // Prioritize common local subnets
+    // Prioritize all private subnets: 192.168.x.x → 10.x.x.x → 172.16-31.x.x
     const sorted = ips.sort((a, b) => {
-        if (a.startsWith('192.168.')) return -1;
-        if (b.startsWith('192.168.')) return 1;
-        if (a.startsWith('10.')) return -1;
-        if (b.startsWith('10.')) return 1;
-        return 0;
+        const score = (ip) => {
+            if (ip.startsWith('192.168.')) return 0;
+            if (ip.startsWith('10.'))      return 1;
+            if (ip.startsWith('172.'))     return 2;
+            return 3;
+        };
+        return score(a) - score(b);
     });
 
+    console.log('Detected IPs:', sorted);
     return sorted[0];
 }
 
@@ -125,7 +131,7 @@ function createMainWindow() {
         mainWindow.webContents.once('did-finish-load', () => {
             const ip = getLocalIP();
             const url = `http://${ip}:${WEB_PORT}`;
-            QRCode.toDataURL(url, { margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
+            QRCode.toDataURL(url, { width: 300, margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
                 mainWindow.webContents.send('network-ip', { ip, port: WEB_PORT, qr: qrUrl });
             });
         });
@@ -257,7 +263,7 @@ app.whenReady().then(() => {
         
         // Notify renderer with the IP and generate a QR Code
         mainWindow.webContents.once('did-finish-load', () => {
-            QRCode.toDataURL(url, { margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
+            QRCode.toDataURL(url, { width: 300, margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
                 mainWindow.webContents.send('network-ip', { ip, port: WEB_PORT, qr: qrUrl });
             });
         });

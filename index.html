@@ -6,6 +6,46 @@
     <title>Videowaves Timer | Professional Broadcast Timer</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        /* Force Overlay Visibility */
+        .large-push-overlay {
+            position: absolute;
+            top: 25% !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: 90% !important;
+            z-index: 99999 !important;
+            text-align: center;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+        }
+        .large-push-content {
+            background: rgba(0, 0, 0, 0.9) !important;
+            backdrop-filter: blur(20px);
+            border: 3px solid #00d4ff !important;
+            padding: 30px 60px !important;
+            border-radius: 20px !important;
+            box-shadow: 0 0 60px rgba(0, 212, 255, 0.6) !important;
+        }
+        .large-push-label {
+            display: block;
+            font-size: 1rem;
+            font-weight: 900;
+            color: #00d4ff;
+            letter-spacing: 5px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        #large-push-text {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #ffffff;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
     <div class="viewport-wrapper">
@@ -41,6 +81,14 @@
                 <div class="timer-label" id="timer-label">COUNTDOWN</div>
             </div>
 
+            <!-- Large Push Message Overlay (Global) -->
+            <div class="large-push-overlay hidden" id="large-push-overlay">
+                <div class="large-push-content">
+                    <span class="large-push-label">ANNOUNCEMENT</span>
+                    <h2 id="large-push-text"></h2>
+                </div>
+            </div>
+
             <!-- Floating Control Bar (Visible on Hover) -->
             <div class="control-bar" id="control-bar">
                 <!-- Row 0: Branding -->
@@ -48,7 +96,7 @@
                     <span class="brand-logo-text">VIDEOWAVES <span class="brand-accent">TIMER</span></span>
                     <span class="brand-tagline">Professional Broadcast Control</span>
                     <div class="network-remote-box" id="network-ip-display" style="display:none;">
-                        <img id="qr-code-img" src="" alt="QR Code" class="qr-code-img">
+                        <img id="qr-code-img" src="" alt="QR Code" class="qr-code-img" style="width:80px;height:80px;">
                         <div class="network-text">
                             <span class="network-title">Scan to Control</span>
                             <span class="network-url" id="network-url-text">Loading...</span>
@@ -81,9 +129,22 @@
                         <button class="btn btn-small preset-btn" data-min="10">10m</button>
                         <button class="btn btn-small preset-btn" data-min="15">15m</button>
                         <button class="btn btn-small preset-btn" data-min="20">20m</button>
+                        <button class="btn btn-small preset-btn" data-min="25">25m</button>
                         <button class="btn btn-small preset-btn" data-min="30">30m</button>
+                        <button class="btn btn-small preset-btn" data-min="35">35m</button>
+                        <button class="btn btn-small preset-btn" data-min="40">40m</button>
                         <button class="btn btn-small preset-btn" data-min="45">45m</button>
+                        <button class="btn btn-small preset-btn" data-min="50">50m</button>
+                        <button class="btn btn-small preset-btn" data-min="55">55m</button>
                         <button class="btn btn-small preset-btn" data-min="60">60m</button>
+                        <button class="btn btn-small preset-btn" data-min="65">65m</button>
+                        <button class="btn btn-small preset-btn" data-min="70">70m</button>
+                        <button class="btn btn-small preset-btn" data-min="75">75m</button>
+                        <button class="btn btn-small preset-btn" data-min="80">80m</button>
+                        <button class="btn btn-small preset-btn" data-min="85">85m</button>
+                        <button class="btn btn-small preset-btn" data-min="90">90m</button>
+                        <button class="btn btn-small preset-btn" data-min="95">95m</button>
+                        <button class="btn btn-small preset-btn" data-min="100">100m</button>
                     </div>
                 </div>
                 <!-- Row 3: Holding Controls -->
