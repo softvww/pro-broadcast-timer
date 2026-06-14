@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Videowaves Timer | Professional Broadcast Timer</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Roboto+Mono:wght@500&display=swap"
+        rel="stylesheet">
     <style>
         /* Force Overlay Visibility */
         .large-push-overlay {
@@ -20,6 +23,7 @@
             display: flex;
             justify-content: center;
         }
+
         .large-push-content {
             background: rgba(0, 0, 0, 0.9) !important;
             backdrop-filter: blur(20px);
@@ -28,6 +32,7 @@
             border-radius: 20px !important;
             box-shadow: 0 0 60px rgba(0, 212, 255, 0.6) !important;
         }
+
         .large-push-label {
             display: block;
             font-size: 1rem;
@@ -37,6 +42,7 @@
             margin-bottom: 8px;
             text-transform: uppercase;
         }
+
         #large-push-text {
             font-size: 4rem;
             font-weight: 900;
@@ -44,9 +50,13 @@
             margin: 0;
             text-transform: uppercase;
         }
-        .hidden { display: none !important; }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
+
 <body>
     <div class="viewport-wrapper">
         <div class="aspect-ratio-container" id="main-container">
@@ -95,13 +105,15 @@
                 <div class="control-brand-row">
                     <span class="brand-logo-text">VIDEOWAVES <span class="brand-accent">TIMER</span></span>
                     <span class="brand-tagline">Professional Broadcast Control</span>
-                    <div class="network-remote-box" id="network-ip-display" style="display:none;">
+                    <div class="network-remote-box" id="network-ip-display" style="display:flex;">
                         <img id="qr-code-img" src="" alt="QR Code" class="qr-code-img" style="width:80px;height:80px;">
                         <div class="network-text">
                             <span class="network-title">Scan to Control</span>
                             <span class="network-url" id="network-url-text">Loading...</span>
                         </div>
-                        <button class="btn btn-secondary" id="help-btn" style="border-radius:50%; width: 28px; height: 28px; padding: 0; margin-left: 10px; font-weight:bold; display: flex; align-items: center; justify-content: center;" title="How to Connect">?</button>
+                        <button class="btn btn-secondary" id="help-btn"
+                            style="border-radius:50%; width: 28px; height: 28px; padding: 0; margin-left: 10px; font-weight:bold; display: flex; align-items: center; justify-content: center;"
+                            title="How to Connect">?</button>
                     </div>
                 </div>
                 <!-- Row 1: Timer controls -->
@@ -113,8 +125,10 @@
                     <button class="btn btn-secondary" id="stop-btn">⏸ STOP</button>
                     <button class="btn btn-danger" id="reset-btn">↺ RESET</button>
                     <div class="control-divider"></div>
-                    <button class="btn btn-toggle" id="holding-toggle" style="background: #5856d6;">HOLDING MODE</button>
-                    <button class="btn btn-toggle" id="broadcast-btn" style="background: #34c759;">📺 OPEN BROADCAST</button>
+                    <button class="btn btn-toggle" id="holding-toggle" style="background: #5856d6;">HOLDING
+                        MODE</button>
+                    <button class="btn btn-toggle" id="broadcast-btn" style="background: #34c759;">📺 OPEN
+                        BROADCAST</button>
                 </div>
                 <!-- Row 2: Quick Presets + Audio -->
                 <div class="control-group">
@@ -156,8 +170,10 @@
                     </label>
                     <button class="btn btn-secondary" id="clear-image-btn" style="font-size:0.78rem;">CLEAR IMG</button>
                     <div class="control-divider"></div>
-                    <input type="text" id="holding-input" placeholder="Holding text (optional)..." value="" style="width:200px;">
-                    <button class="btn btn-secondary" id="holding-clear-text-btn" style="font-size:0.78rem;">CLEAR TEXT</button>
+                    <input type="text" id="holding-input" placeholder="Holding text (optional)..." value=""
+                        style="width:200px;">
+                    <button class="btn btn-secondary" id="holding-clear-text-btn" style="font-size:0.78rem;">CLEAR
+                        TEXT</button>
                     <div class="control-divider"></div>
                     <input type="text" id="push-msg-input" placeholder="Push message to screen..." style="width:220px;">
                     <button class="btn btn-push" id="push-msg-btn">📣 PUSH MSG</button>
@@ -168,16 +184,22 @@
     </div>
 
     <!-- Help Modal -->
-    <div class="overlay hidden" id="help-modal" style="background: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center;">
-        <div style="background: #0e1623; border: 1px solid #00d4ff; padding: 30px; border-radius: 12px; max-width: 500px; color: #fff; font-family: 'Outfit', sans-serif;">
+    <div class="overlay hidden" id="help-modal"
+        style="background: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+        <div
+            style="background: #0e1623; border: 1px solid #00d4ff; padding: 30px; border-radius: 12px; max-width: 500px; color: #fff; font-family: 'Outfit', sans-serif;">
             <h2 style="color: #00d4ff; margin-bottom: 15px;">How to Control via Mobile</h2>
             <ol style="line-height: 1.8; margin-left: 20px; color: #e8edf5;">
-                <li>Ensure your <strong>Phone and Laptop</strong> are connected to the <strong>SAME WiFi network</strong>.</li>
+                <li>Ensure your <strong>Phone and Laptop</strong> are connected to the <strong>SAME WiFi
+                        network</strong>.</li>
                 <li>Open your phone's Camera and <strong>Scan the QR Code</strong> shown in the app header.</li>
-                <li>Alternatively, open your phone's browser and type the URL shown (e.g. <code>http://192.168.x.x:3030</code>).</li>
+                <li>Alternatively, open your phone's browser and type the URL shown (e.g.
+                    <code>http://192.168.x.x:3030</code>).</li>
             </ol>
-            <div style="margin-top: 20px; padding: 10px; background: rgba(255,149,0,0.1); border-left: 4px solid #ff9500; font-size: 0.9rem;">
-                <strong>Not connecting?</strong> Ensure Windows Firewall is allowing the app to communicate on Private networks.
+            <div
+                style="margin-top: 20px; padding: 10px; background: rgba(255,149,0,0.1); border-left: 4px solid #ff9500; font-size: 0.9rem;">
+                <strong>Not connecting?</strong> Ensure Windows Firewall is allowing the app to communicate on Private
+                networks.
             </div>
             <button id="close-help-btn" class="btn btn-primary" style="margin-top: 25px; width: 100%;">Got it!</button>
         </div>
@@ -211,7 +233,7 @@
         if (key && window.electronAPI) {
             const machineId = await window.electronAPI.getMachineId();
             const docRef = doc(db, "licenses", key);
-            
+
             onSnapshot(docRef, (snapshot) => {
                 const data = snapshot.data();
                 if (data && data.machineId && data.machineId !== machineId) {
@@ -222,4 +244,5 @@
         }
     </script>
 </body>
+
 </html>

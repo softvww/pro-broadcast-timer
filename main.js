@@ -128,19 +128,31 @@ function createMainWindow() {
         app.quit();
     });
 
-    // Re-attach network listeners if needed
     if (wss) {
-        mainWindow.webContents.once('did-finish-load', () => {
-            const ip = getLocalIP();
-            const localUrl = `http://${ip}:${WEB_PORT}`;
-            const globalUrl = globalTunnelUrl || 'Creating...';
-
-            QRCode.toDataURL(globalTunnelUrl || localUrl, { width: 300, margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
-                mainWindow.webContents.send('network-ip', { ip, port: WEB_PORT, qr: qrUrl, globalUrl: globalTunnelUrl });
-            });
+        mainWindow.webContents.on('did-finish-load', () => {
+            sendNetworkInfo();
         });
     }
 }
+
+function sendNetworkInfo() {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const ip = getLocalIP();
+    const localUrl = `http://${ip}:${WEB_PORT}`;
+    const displayUrl = globalTunnelUrl || localUrl;
+
+    QRCode.toDataURL(displayUrl, { width: 300, margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('network-ip', {
+                ip,
+                port: WEB_PORT,
+                qr: qrUrl,
+                globalUrl: globalTunnelUrl
+            });
+        }
+    });
+}
+
 
 // IPC Handlers for Activation
 const { machineIdSync } = require('node-machine-id');
@@ -265,32 +277,26 @@ app.whenReady().then(() => {
         const localUrl = `http://${ip}:${WEB_PORT}`;
         console.log(`\n🌐 Local Network Control Panel: ${localUrl}\n`);
 
+        // Initial broadcast
+        sendNetworkInfo();
+
         // --- START LOCALTUNNEL ---
         try {
             const tunnel = await localtunnel({ port: WEB_PORT });
             globalTunnelUrl = tunnel.url;
             console.log(`\n🌍 GLOBAL URL (Use from any network): ${globalTunnelUrl}\n`);
 
+            // Broadcast global update
+            sendNetworkInfo();
+
             tunnel.on('close', () => {
                 console.log('Tunnel closed');
                 globalTunnelUrl = null;
+                sendNetworkInfo();
             });
         } catch (err) {
             console.error('Localtunnel failed:', err);
         }
-
-        // Notify renderer with the IP and generate a QR Code
-        mainWindow.webContents.once('did-finish-load', () => {
-            const displayUrl = globalTunnelUrl || localUrl;
-            QRCode.toDataURL(displayUrl, { width: 300, margin: 1, color: { dark: '#00d4ff', light: '#00000000' } }, (err, qrUrl) => {
-                mainWindow.webContents.send('network-ip', {
-                    ip,
-                    port: WEB_PORT,
-                    qr: qrUrl,
-                    globalUrl: globalTunnelUrl
-                });
-            });
-        });
     });
 
     // ── Auto-Update Check ──
